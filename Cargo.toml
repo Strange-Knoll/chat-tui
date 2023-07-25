@@ -1,0 +1,15 @@
+[package]
+name = "chat-tui"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-openai = "0.10.3"
+ratatui = { version = "0.21.0", features = ["all-widgets"] }
+tokio = { version = "1.28.2", features = ["full"] }
+anyhow = "1.0.71"
+crossterm = "0.26.1"
+unicode-width = "0.1.10"
+chrono = "0.4.26"
