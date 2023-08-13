@@ -19,6 +19,10 @@ impl Ai{
             assistant: String::new(),
         }
     }
+    pub fn client(&mut self, client:Client) -> &mut Self{
+        self.client = client;
+        self
+    }
     pub fn user(&mut self, user: String) -> &mut Self{
         self.user = user;
         self

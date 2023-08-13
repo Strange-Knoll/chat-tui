@@ -104,6 +104,13 @@ impl Ui{
             _ => system_panel.panel.active(false),
         };
         system_panel.draw(system_layout_v[1], f, app);
+
+        let mut key_panel = panel::key_panel::new();
+        match app.input.mode {
+            InputMode::ApiKey => key_panel.panel.active(true),
+            _ => key_panel.panel.active(false),
+        };
+        key_panel.draw(system_layout_v[1], f, app)
         //button.clicked();
         //f.render_widget(menu_bar, menu_layout[0]);
         //f.render_widget(chat_widget, window[1]);

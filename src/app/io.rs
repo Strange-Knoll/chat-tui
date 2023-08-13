@@ -1,5 +1,6 @@
 use std::{error::Error, fs::{File, self}, io::Write};
 
+use async_openai::Client;
 use crossterm::event::{KeyCode, KeyEvent, MouseEvent, MouseButton, MouseEventKind};
 
 use crate::{App, ai};
@@ -8,6 +9,8 @@ pub struct Input{
     pub mode: InputMode,
     pub query: String,
     pub system: String,
+    pub assistant: String,
+    pub key:String,
     pub cursor_pos:(u16, u16),
 }
 #[derive(Clone)]
@@ -19,7 +22,9 @@ pub struct Output{
 pub enum InputMode{
     Normal,
     Editing,
-    System 
+    System,
+    Assistant,
+    ApiKey
 }
 
 impl Input{
@@ -28,6 +33,8 @@ impl Input{
             mode: InputMode::Normal,
             query: String::new(),
             system: fs::read_to_string("logs/system.txt").unwrap(),
+            assistant: fs::read_to_string("logs/assistant.txt").unwrap(),
+            key: fs::read_to_string("logs/key.txt").unwrap(),
             cursor_pos: (0,0),
         }
     }
@@ -43,8 +50,14 @@ impl Input{
                     KeyCode::Char('s') => {
                         self.mode = InputMode::System;
                     },
+                    KeyCode::Char('k') => {
+                        self.mode = InputMode::ApiKey;
+                    }
                     KeyCode::Enter => {
-                        app.ai = app.ai.clone().system( self.system.clone()).clone();
+                        app.ai = app.ai.clone()
+                            .system( self.system.clone())
+                            .client(Client::new().with_api_key(self.key.clone()))
+                            .clone();
                         let response = app.ai.request(self.query.clone()).await?;
                         self.query = String::new();
                         Output::write_file(app.output.logs_path.clone(), response);
@@ -103,6 +116,30 @@ impl Input{
                     _ => {}
                 }
             }
+
+            InputMode::ApiKey => {
+                match key.code{
+                    KeyCode::Esc => {
+                        self.mode = InputMode::Normal;
+                        Output::write_file("logs/key.txt".to_owned(), self.key.clone());
+                        app.ai = app.ai.clone().client(
+                            Client::new().with_api_key(self.key.clone())
+                        ).clone();
+                    }
+                    KeyCode::Char(c) => {
+                        self.key.push(c);
+                    },
+                    KeyCode::Backspace => {
+                        self.key.pop();
+                    }
+                    KeyCode::Enter =>{
+                        self.key.push_str(cli_clipboard::get_contents().unwrap().as_str());
+                    }
+                    _ => {}
+                }
+            }
+
+            _=>{}
 
         }
         
