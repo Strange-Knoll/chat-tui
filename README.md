@@ -25,6 +25,7 @@ dependicies
 - crossterm
 - ratatui
 - tokio
+- cli-clipboard
 
 
 planned features
