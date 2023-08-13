@@ -105,12 +105,12 @@ impl <'a> query_panel <'a>{
                     .borders(Borders::ALL)
                     .border_type(BorderType::Rounded)
                     .border_style(Style::default().fg(Color::Magenta))
-                    .title("Query"))
+                    .title("Ask Question"))
                 .inactive_block(Block::default()
                     .borders(Borders::ALL)
                     .border_type(BorderType::Rounded)
                     .border_style(Style::default().fg(Color::White))
-                    .title("Query")
+                    .title("Ask Question")
                 ).clone(),
         }
     }
@@ -160,9 +160,11 @@ impl <'a> status_panel <'a>{
         //let log_string = fs::read_to_string("logs/chat.txt").unwrap();
         let mut para = Paragraph::new(format!("Mode: {}", 
             match app.input.mode{
-                InputMode::Normal => "Normal: (a) write query (s) open system panel (enter) send query (esc) exit",
+                InputMode::Normal => "Normal: (a) ask question (k) set api key (s) open system panel (enter) send query (q) exit",
                 InputMode::Editing => "Editing: (esc) return to Normal mode",
                 InputMode::System => "System: (esc) return to Normal mode",
+                InputMode::Assistant => "Assistant: (esc) return to Normal mode",
+                InputMode::ApiKey => "Api Key: (enter) paste from clipboard (esc) return to Normal"
             }))
             .alignment(Alignment::Left)
             .wrap(Wrap { trim: false })
@@ -239,5 +241,56 @@ impl <'a> system_panel <'a>{
             }
         }
        
+    }
+}
+
+pub struct key_panel<'a>{
+    pub panel:Panel<'a>
+}
+
+impl <'a> key_panel <'a>{
+    pub fn new() -> Self{
+        Self { 
+            panel: Panel::new()
+                .active(false)
+                .active_block(
+                    Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .border_style(Style::new().fg(Color::Green))
+                    .title("Api Key")
+                )
+                .inactive_block(
+                    Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .border_style(Style::new().fg(Color::White))
+                    .title("Api Key")
+                )
+        }
+    }
+
+    pub fn draw<B:Backend>(&self, rect:Rect, f:&mut Frame<B>, app: &App){
+        let mut para = Paragraph::new(format!("{}", app.input.key.as_str()))
+            .alignment(Alignment::Left)
+            .wrap(Wrap { trim: false });
+
+        if self.panel.active {
+            match self.panel.active_block {
+                Some(ref block) => {
+                    para = para.block(block.clone());
+                    f.render_widget(Clear, rect);
+                    f.render_widget(para, rect);
+                },
+                None => {},
+            }
+        } else{
+            match self.panel.inactive_block {
+                Some(ref block) => {
+                    para = para.block(block.clone());
+                },
+                None => {},
+            }
+        }
     }
 }

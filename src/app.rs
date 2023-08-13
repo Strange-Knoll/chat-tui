@@ -73,8 +73,10 @@ impl App{
             if event::poll(Duration::from_millis(100))? {
                 match event::read()? {
                     Event::Key(key) => {
+                        //pass key to input
                         self.input.key(&mut self.clone(), key).await?;
                         
+                        //if q key is pressed quit program
                         match self.input.mode{   
                             InputMode::Normal => {
                                 match key.code {
@@ -87,6 +89,8 @@ impl App{
                             _ => {}
                         }
                     }
+                    
+                    //pass mouse event to input
                     Event::Mouse(event) => {
                         //self.input.mode = InputMode::Editing;
                         self.input.mouse(&mut self.clone(), event).await?;
