@@ -89,6 +89,8 @@ impl App<'_>{
                             _ => {}
                         }
                     }
+                    
+                    //pass mouse event to input
                     Event::Mouse(me) => {
                         self.input.mouse = me;
                         match me.kind {
