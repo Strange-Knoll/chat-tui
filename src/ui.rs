@@ -64,16 +64,15 @@ impl Ui{
             .direction(Direction::Horizontal)
             .margin(0)
             .constraints([
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
+                Constraint::Percentage(33)
             ].as_ref())
             .split(window[0]);
 
         let menu_block = Block::default()
             .borders(Borders::NONE);
 
-
+        let mut menu_bar = panel::menu_bar::new();
+        menu_bar.draw(window[0], f, app);
 
         
         let mut chat_panel = panel::chat_panel::new();

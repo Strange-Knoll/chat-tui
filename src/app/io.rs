@@ -1,7 +1,7 @@
 use std::{error::Error, fs::{File, self}, io::Write};
 
 use async_openai::Client;
-use crossterm::event::{KeyCode, KeyEvent, MouseEvent, MouseButton, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent, MouseEvent, MouseButton, MouseEventKind, Event, self};
 
 use crate::{App, ai};
 #[derive(Clone)]
@@ -12,6 +12,7 @@ pub struct Input{
     pub assistant: String,
     pub key:String,
     pub cursor_pos:(u16, u16),
+    pub mouse: MouseEvent,
 }
 #[derive(Clone)]
 pub struct Output{
@@ -36,6 +37,7 @@ impl Input{
             assistant: fs::read_to_string("logs/assistant.txt").unwrap(),
             key: fs::read_to_string("logs/key.txt").unwrap(),
             cursor_pos: (0,0),
+            mouse: MouseEvent{kind:MouseEventKind::Moved, column:0, row:0, modifiers:crossterm::event::KeyModifiers::NONE},
         }
     }
 
@@ -146,20 +148,13 @@ impl Input{
         Ok(self)
     }
 
-    pub async fn mouse(&mut self, app:&mut App, event:MouseEvent) -> Result<&mut Self, Box<dyn Error>>{
-        match event.kind{
-            MouseEventKind::Down(MouseButton::Left) => {
-                //self.mode = InputMode::Editing;
-            },
-            MouseEventKind::ScrollUp => {
-                if self.cursor_pos.0>0{
-                    self.cursor_pos.0 -= 2;
-                }
-            },
-            MouseEventKind::ScrollDown => {
-                self.cursor_pos.0 += 2;
-            },
-            _ => {}
+    pub async fn mouse(&mut self, app:&mut App) -> Result<&mut Self, Box<dyn Error>>{
+        
+        let event = event::read()?;
+        if let Event::Mouse(me) = event{
+            if me.kind == MouseEventKind::Down(MouseButton::Left){
+                self.mouse = me;
+            }
         }
         
         Ok(self)

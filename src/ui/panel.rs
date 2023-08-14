@@ -1,14 +1,16 @@
 use std::fs;
 
-use ratatui::{widgets::{Block, Paragraph, Borders, BorderType, Clear, Wrap}, layout::{Rect, Alignment}, Frame, backend::Backend, style::{Color, Style, Modifier}};
+use ratatui::{widgets::{Block, Paragraph, Borders, BorderType, Clear, Wrap}, layout::{Rect, Alignment, Constraint, Layout, Direction}, Frame, backend::Backend, style::{Color, Style, Modifier}};
 
 use crate::{App, app::{io::InputMode, self}};
 
+use super::button::Button;
+
 #[derive(Clone)]
 pub struct Panel<'a>{
-    active: bool,
-    active_block: Option<Block<'a>>,
-    inactive_block: Option<Block<'a>>
+    pub active: bool,
+    pub active_block: Option<Block<'a>>,
+    pub inactive_block: Option<Block<'a>>
 }
 
 
@@ -37,6 +39,81 @@ impl<'a> Panel<'a>{
     }
 }
 
+pub struct menu_bar<'a>{
+    pub panel: Panel<'a>
+}
+
+impl menu_bar<'_>{
+    pub fn new() -> Self{
+        Self{
+            panel:Panel::new()
+                .active(false)
+                .active_block(
+                    Block::default()
+                        .borders(Borders::NONE)
+                        .style(Style::default().fg(Color::Magenta))
+                ).clone()
+                .inactive_block(
+                    Block::default()
+                        .borders(Borders::NONE)
+                        .style(Style::default().fg(Color::White))
+                ).clone()
+        }
+    }
+    pub fn draw<B:Backend>(&self, rect:Rect, f:&mut Frame<B>, app:&mut App){
+        let mut key = Paragraph::new("Api Key");
+        let mut system = Paragraph::new("System");
+        let mut assistant = Paragraph::new("Assistant");
+        let mut help = Paragraph::new("Help");
+
+        let layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .margin(0)
+            .constraints( vec![
+                Constraint::Length(" Api Key ".len() as u16),
+                Constraint::Length(" System ".len()as u16),
+                Constraint::Length(" Assistant ".len() as u16),
+                Constraint::Length(" Help ".len()as u16),
+            ].as_ref())
+            .split(rect);
+        
+        let key_btn = Button::new(layout[0], app.clone());
+        let system_btn = Button::new(layout[1], app.clone());
+        let assistant_btn = Button::new(layout[2], app.clone());
+        let help_btn = Button::new(layout[3], app.clone());
+        
+        if key_btn.clicked(){
+            key = key.clone().block(self.panel.active_block.as_ref().unwrap().clone());
+            app.input.mode = InputMode::ApiKey;
+        }else {
+            key = key.clone().block(self.panel.inactive_block.as_ref().unwrap().clone());
+        }
+        if system_btn.clicked(){
+            system = system.clone().block(self.panel.active_block.as_ref().unwrap().clone());
+            app.input.mode = InputMode::System;
+        }else {
+            system = system.clone().block(self.panel.inactive_block.as_ref().unwrap().clone());
+        }
+        /*if assistant_btn.clicked(){
+            assistant = assistant.clone().block(self.panel.active_block.as_ref().unwrap().clone());
+        }else {
+            assistant = assistant.clone().block(self.panel.inactive_block.as_ref().unwrap().clone());
+        }
+        if help_btn.clicked(){
+            help = help.clone().block(self.panel.active_block.as_ref().unwrap().clone());
+        }else {
+            help = help.clone().block(self.panel.inactive_block.as_ref().unwrap().clone());
+        }*/
+
+        
+        f.render_widget(key, layout[0]);
+        f.render_widget(system, layout[1]);
+        //f.render_widget(assistant, layout[2]);
+        //f.render_widget(help, layout[3]);
+                
+    }
+}
+
 #[derive(Clone)]
 pub struct chat_panel<'a>{
     pub panel: Panel<'a>,
@@ -62,7 +139,7 @@ impl chat_panel<'_>{
         }
     }
 
-    pub fn draw<B:Backend>(&self, rect:Rect, f: &mut Frame<B>, app: &App){
+    pub fn draw<B:Backend>(&self, rect:Rect, f: &mut Frame<B>, app: &mut App){
         let log_string = fs::read_to_string("logs/chat.txt").unwrap();
 
         let mut para = Paragraph::new(log_string.as_str())
@@ -84,6 +161,10 @@ impl chat_panel<'_>{
                 },
                 None => {},
             }
+        }
+        let button = Button::new(rect, app.clone());
+        if button.clicked(){
+            app.input.mode = InputMode::Normal;
         }
 
         f.render_widget(para, rect);
@@ -115,7 +196,7 @@ impl <'a> query_panel <'a>{
         }
     }
 
-    pub fn draw<B:Backend>(&self, rect:Rect, f: &mut Frame<B>, app: &App){
+    pub fn draw<B:Backend>(&self, rect:Rect, f: &mut Frame<B>, app: &mut App){
         //let log_string = fs::read_to_string("logs/chat.txt").unwrap();
         let mut para = Paragraph::new(format!("{}_",app.input.query.as_str()))
             .alignment(Alignment::Left)
@@ -136,6 +217,10 @@ impl <'a> query_panel <'a>{
                 },
                 None => {},
             }
+        }
+        let button = Button::new(rect, app.clone());
+        if button.clicked(){
+            app.input.mode = InputMode::Editing;
         }
 
         f.render_widget(para, rect);
