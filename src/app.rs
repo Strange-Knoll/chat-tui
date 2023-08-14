@@ -89,14 +89,12 @@ impl App{
                             _ => {}
                         }
                     }
-                    
-                    //pass mouse event to input
-                    Event::Mouse(event) => {
-                        //self.input.mode = InputMode::Editing;
-                        self.input.mouse(&mut self.clone(), event).await?;
-                    },
+                    Event::Mouse(me) => {
+                        self.input.mouse = me;
+                    }
                     _ => {}
                 }
+                //self.input.mouse(&mut self.clone()).await?;
             }
         }
 
