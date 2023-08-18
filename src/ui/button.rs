@@ -11,16 +11,16 @@ use ratatui::layout::Rect;
 
 use crate::app::App;
 
-pub struct Button {
+pub struct Button<'a> {
     pub rect: Rect,
-    pub app: App,
+    pub app: App<'a>,
 }
 
-impl Button {
-    pub fn new(rect:Rect, app:App) -> Self {
-        Self {
-            rect: rect,
-            app: app,
+impl Button <'_> {
+    pub fn new(rect:Rect, app:App<'_>) -> Button<'_> {
+        Button {
+            rect,
+            app,
         }
     }
 
@@ -34,7 +34,7 @@ impl Button {
         false
     }
 
-    pub fn clicked (&self) -> bool {
+    pub fn clicked (&mut self) -> bool {
         let mut out = false;
         if self.app.input.mouse.kind == MouseEventKind::Down(MouseButton::Left) {
             if self.mouse_in_rect(self.app.input.mouse.column, self.app.input.mouse.row) {

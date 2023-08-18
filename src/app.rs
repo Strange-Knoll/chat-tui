@@ -3,7 +3,7 @@ use io::InputMode;
 use std::{fs, io::{Stdout, stdout}, error::Error, time::Duration};
 
 use async_openai::Client;
-use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, ExecutableCommand, execute, event::{EnableMouseCapture, DisableMouseCapture, self, Event, KeyCode}};
+use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, ExecutableCommand, execute, event::{EnableMouseCapture, DisableMouseCapture, self, Event, KeyCode, MouseEvent, MouseEventKind}};
 use io::{Input, Output};
 use ratatui::{Terminal, backend::CrosstermBackend};
 
@@ -11,16 +11,16 @@ use crate::{ui::Ui, ai::Ai};
 
 
 #[derive(Clone)]
-pub struct App{
+pub struct App<'a>{
     pub client : Client,
-    pub ui: Ui,
+    pub ui: Ui<'a>,
     pub ai: Ai,
     pub input: Input,
     pub output: Output,
     pub running: bool,
 }
 
-impl App{
+impl App<'_>{
     pub fn new() -> Self{
         let api_key = fs::read_to_string("logs/key.txt").unwrap();
         let client = Client::new().with_api_key(api_key);
@@ -91,6 +91,43 @@ impl App{
                     }
                     Event::Mouse(me) => {
                         self.input.mouse = me;
+                        match me.kind {
+                            MouseEventKind::ScrollDown => {
+                                match self.input.mode{
+                                    InputMode::Normal => {
+                                        self.ui.chat_panel.panel.scroll.0 += 1;
+                                    },
+                                    InputMode::Editing => {
+                                        self.ui.query_panel.panel.scroll.0 += 1;
+                                    },
+                                    InputMode::System => {
+                                        self.ui.system_panel.panel.scroll.0 += 1;
+                                    },
+                                    _ => {}
+                                }
+                            }
+                            MouseEventKind::ScrollUp =>{
+                                match self.input.mode{
+                                    InputMode::Normal => {
+                                        if self.ui.chat_panel.panel.scroll.0 > 0 {
+                                            self.ui.chat_panel.panel.scroll.0 -= 1;
+                                        }
+                                    },
+                                    InputMode::Editing => {
+                                        if self.ui.query_panel.panel.scroll.0 > 0 {
+                                            self.ui.query_panel.panel.scroll.0 -= 1;
+                                        }
+                                    },
+                                    InputMode::System => {
+                                        if self.ui.system_panel.panel.scroll.0 > 0 {
+                                            self.ui.system_panel.panel.scroll.0 -= 1;
+                                        }
+                                    },
+                                    _ => {}
+                                }
+                            }
+                            _ => {}
+                        }
                     }
                     _ => {}
                 }

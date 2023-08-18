@@ -17,15 +17,21 @@ pub enum Panels{
 }
 
 #[derive(Clone)]
-pub struct Ui{
+pub struct Ui<'a>{
     pub active_panel: Panels,
+    pub chat_panel: panel::chat_panel<'a>,
+    pub query_panel: panel::query_panel<'a>,
+    pub system_panel: panel::system_panel<'a>,
 
 }
 
-impl Ui{
+impl Ui<'_>{
     pub fn new() -> Self{
         Self{
             active_panel: Panels::Chat,
+            chat_panel: panel::chat_panel::new(),
+            query_panel: panel::query_panel::new(),
+            system_panel: panel::system_panel::new(),
         }
     }
 
@@ -75,41 +81,67 @@ impl Ui{
         menu_bar.draw(window[0], f, app);
 
         
-        let mut chat_panel = panel::chat_panel::new();
+        //Chat Panel
         match app.input.mode{
-            InputMode::Normal => chat_panel.panel.active(true),
-            _ => chat_panel.panel.active(false),
-        };
-        chat_panel.draw(window[1], f, app);
-
-        let mut query_panel = panel::query_panel::new();
-        match app.input.mode{
-            InputMode::Editing => query_panel.panel.active(true),
-            _ => query_panel.panel.active(false),
+            InputMode::Normal => app.ui.chat_panel.panel.active(true),
+            _ => app.ui.chat_panel.panel.active(false),
         };
 
-        query_panel.draw(window[2], f, app);
+        //
+        // need to find a way to not clone app
+        // 
+        let mut chat_btn = Button::new(window[1], app.clone());
+        if chat_btn.clicked(){
+            app.input.mode = InputMode::Normal;
+        }
         
+        app.ui.chat_panel.draw(window[1], f);
+    
+        //
+        //
+        //
+
+        //Query Panel
+        match app.input.mode{
+            InputMode::Editing => app.ui.query_panel.panel.active(true),
+            _ => app.ui.query_panel.panel.active(false),
+        };
+        let mut query_btn = Button::new(window[2], app.clone());
+        if query_btn.clicked(){
+            app.input.mode = InputMode::Editing;
+        }
+
+        app.ui.query_panel.draw(window[2], f, &app.clone());
+        
+        //Status Panel
         let mut status_panel = panel::status_panel::new();
         match app.input.mode{
             InputMode::Normal => status_panel.panel.active(true),
             _ => status_panel.panel.active(false),
         };
         status_panel.draw(window[3], f, app);
-        
-        let mut system_panel = panel::system_panel::new();
-        match app.input.mode{
-            InputMode::System => system_panel.panel.active(true),
-            _ => system_panel.panel.active(false),
-        };
-        system_panel.draw(system_layout_v[1], f, app);
 
+
+        
+        //System Panel
+        match app.input.mode{
+            InputMode::System => app.ui.system_panel.panel.active(true),
+            _ => app.ui.system_panel.panel.active(false),
+        };
+
+        app.ui.system_panel.draw(system_layout_v[1], f, &mut app.clone());
+
+
+
+        //Key Panel
         let mut key_panel = panel::key_panel::new();
         match app.input.mode {
             InputMode::ApiKey => key_panel.panel.active(true),
             _ => key_panel.panel.active(false),
         };
         key_panel.draw(system_layout_v[1], f, app)
+
+
         //button.clicked();
         //f.render_widget(menu_bar, menu_layout[0]);
         //f.render_widget(chat_widget, window[1]);
