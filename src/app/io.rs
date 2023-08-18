@@ -41,8 +41,13 @@ impl Input{
         }
     }
 
+    pub fn mode(&mut self, mode: InputMode) -> Self{
+        self.mode = mode;
+        self.clone()
+    }
 
-    pub async fn key(&mut self, app: &mut App, key:KeyEvent) ->  Result<&mut Self, Box<dyn Error>>{
+
+    pub async fn key(&mut self, app: &mut App<'_>, key:KeyEvent) ->  Result<&mut Self, Box<dyn Error>>{
         match self.mode{
             InputMode::Normal => {
                 match key.code{
@@ -148,7 +153,7 @@ impl Input{
         Ok(self)
     }
 
-    pub async fn mouse(&mut self, app:&mut App) -> Result<&mut Self, Box<dyn Error>>{
+    pub async fn mouse(&mut self, app:&mut App<'_>) -> Result<&mut Self, Box<dyn Error>>{
         
         let event = event::read()?;
         if let Event::Mouse(me) = event{

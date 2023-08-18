@@ -1,5 +1,6 @@
 use std::fs;
 
+use crossterm::event::{MouseEventKind, MouseButton};
 use ratatui::{widgets::{Block, Paragraph, Borders, BorderType, Clear, Wrap}, layout::{Rect, Alignment, Constraint, Layout, Direction}, Frame, backend::Backend, style::{Color, Style, Modifier}};
 
 use crate::{App, app::{io::InputMode, self}};
@@ -10,7 +11,8 @@ use super::button::Button;
 pub struct Panel<'a>{
     pub active: bool,
     pub active_block: Option<Block<'a>>,
-    pub inactive_block: Option<Block<'a>>
+    pub inactive_block: Option<Block<'a>>,
+    pub scroll: (u16, u16),
 }
 
 
@@ -20,6 +22,7 @@ impl<'a> Panel<'a>{
             active: false,
             active_block: None,
             inactive_block: None,
+            scroll: (0,0),
         }
     }
 
@@ -77,10 +80,10 @@ impl menu_bar<'_>{
             ].as_ref())
             .split(rect);
         
-        let key_btn = Button::new(layout[0], app.clone());
-        let system_btn = Button::new(layout[1], app.clone());
-        let assistant_btn = Button::new(layout[2], app.clone());
-        let help_btn = Button::new(layout[3], app.clone());
+        let mut key_btn = Button::new(layout[0], app.clone());
+        let mut system_btn = Button::new(layout[1], app.clone());
+        let mut assistant_btn = Button::new(layout[2], app.clone());
+        let mut help_btn = Button::new(layout[3], app.clone());
         
         if key_btn.clicked(){
             key = key.clone().block(self.panel.active_block.as_ref().unwrap().clone());
@@ -88,12 +91,14 @@ impl menu_bar<'_>{
         }else {
             key = key.clone().block(self.panel.inactive_block.as_ref().unwrap().clone());
         }
+
         if system_btn.clicked(){
             system = system.clone().block(self.panel.active_block.as_ref().unwrap().clone());
             app.input.mode = InputMode::System;
         }else {
             system = system.clone().block(self.panel.inactive_block.as_ref().unwrap().clone());
         }
+
         /*if assistant_btn.clicked(){
             assistant = assistant.clone().block(self.panel.active_block.as_ref().unwrap().clone());
         }else {
@@ -139,18 +144,33 @@ impl chat_panel<'_>{
         }
     }
 
-    pub fn draw<B:Backend>(&self, rect:Rect, f: &mut Frame<B>, app: &mut App){
+    pub fn draw<B:Backend>(&mut self, rect:Rect, f: &mut Frame<B>){
         let log_string = fs::read_to_string("logs/chat.txt").unwrap();
 
         let mut para = Paragraph::new(log_string.as_str())
             .alignment(Alignment::Left)
-            .wrap(Wrap { trim: false });
+            .wrap(Wrap { trim: false })
+            .scroll((self.panel.scroll.0, self.panel.scroll.1));
 
+        
         if self.panel.active {
+            /*match app.input.mouse.kind {
+                MouseEventKind::ScrollUp => {
+                    self.panel.scroll.0 += 1;
+                }
+                MouseEventKind::ScrollDown => {
+                    if self.panel.scroll.0 > 0{
+                        self.panel.scroll.0 -= 1;
+                    }
+                }
+                _ => {}
+                
+            }*/
+
             match self.panel.active_block {
                 Some(ref block) => {
-                    para = para.block(block.clone())
-                    .scroll(app.input.cursor_pos);
+                    para = para.block(block.clone());
+                    //.scroll((0, app.input.cursor_pos.1));
                 },
                 None => {},
             }
@@ -162,10 +182,10 @@ impl chat_panel<'_>{
                 None => {},
             }
         }
-        let button = Button::new(rect, app.clone());
+/*         let mut button = Button::new(rect, app.clone());
         if button.clicked(){
-            app.input.mode = InputMode::Normal;
-        }
+            app.input.mode(InputMode::Normal);
+        } */
 
         f.render_widget(para, rect);
     }
@@ -196,17 +216,31 @@ impl <'a> query_panel <'a>{
         }
     }
 
-    pub fn draw<B:Backend>(&self, rect:Rect, f: &mut Frame<B>, app: &mut App){
+    pub fn draw<B:Backend>(&mut self, rect:Rect, f: &mut Frame<B>, app:&App){
         //let log_string = fs::read_to_string("logs/chat.txt").unwrap();
         let mut para = Paragraph::new(format!("{}_",app.input.query.as_str()))
             .alignment(Alignment::Left)
-            .wrap(Wrap { trim: false });
+            .wrap(Wrap { trim: false })
+            .scroll((self.panel.scroll.0, self.panel.scroll.1));
 
+        
         if self.panel.active {
+            /*match app.input.mouse.kind {
+                MouseEventKind::ScrollUp => {
+                    self.panel.scroll.0 = 1;
+                }
+                MouseEventKind::ScrollDown => {
+                    if self.panel.scroll.0 > 0{
+                        self.panel.scroll.0 =0;
+                    }
+                }
+                _ => {}
+                
+            }*/
             match self.panel.active_block {
                 Some(ref block) => {
                     para = para.block(block.clone())
-                    .scroll(app.input.cursor_pos);
+                    
                 },
                 None => {},
             }
@@ -218,11 +252,11 @@ impl <'a> query_panel <'a>{
                 None => {},
             }
         }
-        let button = Button::new(rect, app.clone());
+        /* let mut button = Button::new(rect, app.clone());
         if button.clicked(){
-            app.input.mode = InputMode::Editing;
+            app.input.mode(InputMode::Normal);
         }
-
+ */
         f.render_widget(para, rect);
     }
 }
@@ -301,14 +335,29 @@ impl <'a> system_panel <'a>{
         }
     }
 
-    pub fn draw<B:Backend>(&self, rect:Rect, f: &mut Frame<B>, app: &App){
+    pub fn draw<B:Backend>(&mut self, rect:Rect, f: &mut Frame<B>, app: &App){
         //let log_string = fs::read_to_string("logs/system.txt").unwrap();       
         
         let mut para = Paragraph::new(format!("{}_",app.input.system.as_str()))
             .alignment(Alignment::Left)
-            .wrap(Wrap { trim: false });
+            .wrap(Wrap { trim: false })
+            .scroll((self.panel.scroll.0, self.panel.scroll.1));
+
+        
 
         if self.panel.active {
+            /*match app.input.mouse.kind {
+                MouseEventKind::ScrollUp => {
+                    self.panel.scroll.0 =1;
+                }
+                MouseEventKind::ScrollDown => {
+                    if self.panel.scroll.0 > 0{
+                        self.panel.scroll.0 = 0;
+                    }
+                }
+                _ => {}
+                
+            }*/
             match self.panel.active_block {
                 Some(ref block) => {
                     para = para.block(block.clone());
