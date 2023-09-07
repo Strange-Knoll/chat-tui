@@ -41,8 +41,8 @@ impl Ui<'_>{
             .margin(0)
             .constraints([
                 Constraint::Min(1),
-                Constraint::Percentage(80), 
-                Constraint::Percentage(20),
+                Constraint::Percentage(70), 
+                Constraint::Percentage(30),
                 Constraint::Min(1),
             ].as_ref())
             .split(f.size());
