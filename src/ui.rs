@@ -124,12 +124,14 @@ impl Ui<'_>{
 
         
         //System Panel
+        let mut system_panel = panel::system_panel::new();
         match app.input.mode{
             InputMode::System => app.ui.system_panel.panel.active(true),
             _ => app.ui.system_panel.panel.active(false),
         };
 
         app.ui.system_panel.draw(system_layout_v[1], f, &mut app.clone());
+        system_panel.draw(system_layout_v[1], f, app);
 
 
 
@@ -139,7 +141,6 @@ impl Ui<'_>{
             InputMode::ApiKey => key_panel.panel.active(true),
             _ => key_panel.panel.active(false),
         };
-        system_panel.draw(system_layout_v[1], f, app);
 
         let mut key_panel = panel::key_panel::new();
         match app.input.mode {
